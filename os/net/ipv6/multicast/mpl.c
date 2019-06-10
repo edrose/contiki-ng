@@ -54,6 +54,10 @@
 #include "sys/ctimer.h"
 #include <string.h>
 
+#if UIP_MCAST6_ENGINE == UIP_MCAST6_MPL_EDR
+#include "net/ipv6/multicast/uip-mcast6-route.h"
+#endif
+
 #include "sys/log.h"
 #define LOG_MODULE "MPL"
 #define LOG_LEVEL LOG_LEVEL_NONE
@@ -1012,9 +1016,9 @@ mpl_maddr_check(void)
       }
     }
   }
-  /* Check for domain set addresses that aren't in our maddr table */
+  /* Check for domain set addresses that aren't in our maddr table or mcast routing table */
   for(locdsptr = &domain_set[MPL_DOMAIN_SET_SIZE - 1]; locdsptr >= domain_set; locdsptr--) {
-    if(DOMAIN_SET_IS_USED(locdsptr) && !uip_ds6_maddr_lookup(&locdsptr->data_addr)) {
+    if(DOMAIN_SET_IS_USED(locdsptr) && !uip_ds6_maddr_lookup(&locdsptr->data_addr) && !uip_mcast6_route_lookup(&locdsptr->data_addr)) {
       domain_set_free(locdsptr);
     }
   }
@@ -1735,7 +1739,11 @@ drop:
 static uint8_t
 in(void)
 {
+#if UIP_MCAST6_ENGINE == UIP_MCAST6_ENGINE_MPL_EDR
+  if(!uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr) && !uip_mcast6_route_lookup(&UIP_IP_BUF->destipaddr)) {
+#else
   if(!uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr)) {
+#endif
     LOG_INFO("Not in our domain. No further processing\n");
     return UIP_MCAST6_DROP;
   }
