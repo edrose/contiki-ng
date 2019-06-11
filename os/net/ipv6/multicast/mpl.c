@@ -56,7 +56,7 @@
 
 #include "sys/log.h"
 #define LOG_MODULE "MPL"
-#define LOG_LEVEL LOG_LEVEL_NONE
+#define LOG_LEVEL LOG_LEVEL_DBG
 
 /*---------------------------------------------------------------------------*/
 /* Check Parameters are Correct */
@@ -230,17 +230,48 @@ struct mpl_domain {
   uip_ip6addr_t ctrl_addr; /* Link-local scoped version of data address */
   struct trickle_timer tt;
   uint8_t e; /* Expiration count for trickle timer */
+  uint8_t fwd_strategy; /* Proactive/reactive forwarding flags. XXXX XXPR */
 };
 /**
  * \brief Get the state of the used flag in the buffered message set entry
- * h: pointer to the message set entry
+ * h: pointer to the domain set entry
  */
 #define DOMAIN_SET_IS_USED(h) (uip_is_addr_mcast(&(h)->data_addr))
 /**
  * \brief Clear the state of the used flag in the buffered message set entry
- * h: pointer to the message set entry
+ * h: pointer to the domain set entry
  */
 #define DOMAIN_SET_CLEAR_USED(h) (memset(&(h)->data_addr, 0, sizeof(uip_ip6addr_t)))
+/**
+ * \brief Enable proactive forwarding for this domain
+ * h: pointer to the domain set entry
+ */
+#define DOMAIN_SET_ENABLE_PROACTIVE(h) ((h)->fwd_strategy |= 0x02)
+/**
+ * \brief Enable proactive forwarding for this domain
+ * h: pointer to the domain set entry
+ */
+#define DOMAIN_SET_ENABLE_REACTIVE(h) ((h)->fwd_strategy |= 0x01)
+/**
+ * \brief Disable proactive forwarding for this domain
+ * h: pointer to the domain set entry
+ */
+#define DOMAIN_SET_DISABLE_PROACTIVE(h) ((h)->fwd_strategy &= ~0x02)
+/**
+ * \brief Disable proactive forwarding for this domain
+ * h: pointer to the domain set entry
+ */
+#define DOMAIN_SET_DISABLE_PROACTIVE(h) ((h)->fwd_strategy &= ~0x02)
+/**
+ * \brief Check whether proactive forwarding is enabled for this domain
+ * h: pointer to the domain set entry
+ */
+#define DOMAIN_SET_PROACTIVE(h) (((h)->fwd_strategy & 0x02) == 0x02)
+/**
+ * \brief Check whether reactive forwarding is enabled for this domain
+ * h: pointer to the domain set entry
+ */
+#define DOMAIN_SET_REACTIVE(h) (((h)->fwd_strategy & 0x01) == 0x01)
 /*---------------------------------------------------------------------------*/
 /**
  * Hop-by-Hop Options Header
@@ -493,6 +524,7 @@ buffer_free(struct mpl_msg *msg)
   if(trickle_timer_is_running(&msg->tt)) {
     trickle_timer_stop(&msg->tt);
   }
+  list_remove(msg->seed->min_seq, msg);
   MSG_SET_CLEAR_USED(msg);
 }
 static struct mpl_msg *
@@ -566,6 +598,12 @@ domain_set_allocate(uip_ip6addr_t *address)
       memset(locdsptr, 0, sizeof(struct mpl_domain));
       memcpy(&locdsptr->data_addr, &data_addr, sizeof(uip_ip6addr_t));
       memcpy(&locdsptr->ctrl_addr, &ctrl_addr, sizeof(uip_ip6addr_t));
+#if MPL_PROACTIVE_FORWARDING
+      DOMAIN_SET_ENABLE_PROACTIVE(locdsptr);
+#endif
+#if MPL_REACTIVE_FORWARDING
+      DOMAIN_SET_ENABLE_REACTIVE(locdsptr);
+#endif
       if(!trickle_timer_config(&locdsptr->tt,
                                MPL_CONTROL_MESSAGE_IMIN,
                                MPL_CONTROL_MESSAGE_IMAX,
@@ -911,6 +949,10 @@ data_message_expiration(void *ptr, uint8_t suppress)
   if(locmmptr->e > MPL_DATA_MESSAGE_TIMER_EXPIRATIONS) {
     /* Terminate the trickle timer here if we've already expired enough times */
     trickle_timer_stop(&locmmptr->tt);
+    if (!DOMAIN_SET_REACTIVE(locmmptr->seed->domain)) {
+      LOG_DBG("Message not needed anymore. Freeing...\n");
+      buffer_free(locmmptr);
+    }
     return;
   }
   if(suppress == TRICKLE_TIMER_TX_OK) { /* Only transmit if not suppressed */
@@ -1124,6 +1166,11 @@ icmp_in(void)
       goto discard;
     }
     mpl_control_trickle_timer_start(locdsptr);
+  }
+
+  if (!DOMAIN_SET_REACTIVE(locdsptr)) {
+    // Reactive forwarding disabled for this domain - drop packet
+    goto discard;
   }
   l_missing = 0;
   r_missing = 0;
@@ -1611,7 +1658,9 @@ accept(uint8_t in)
 
 #if MPL_PROACTIVE_FORWARDING
   /* Start Forwarding the message */
-  mpl_data_trickle_timer_start(locmmptr);
+  if(DOMAIN_SET_PROACTIVE(locdsptr)) {
+    mpl_data_trickle_timer_start(locmmptr);
+  }
 #endif
 
   LOG_INFO("Min Seq Number=%u, %u values\n", locssptr->min_seqno, locssptr->count);
@@ -1619,10 +1668,12 @@ accept(uint8_t in)
 
   /* Start the control message timer if needed */
 #if MPL_REACTIVE_FORWARDING && MPL_CONTROL_MESSAGE_TIMER_EXPIRATIONS > 0
-  if(!trickle_timer_is_running(&locdsptr->tt)) {
-    mpl_control_trickle_timer_start(locdsptr);
-  } else {
-    mpl_trickle_timer_reset(locdsptr);
+  if (DOMAIN_SET_REACTIVE(locdsptr)) {
+    if(!trickle_timer_is_running(&locdsptr->tt)) {
+      mpl_control_trickle_timer_start(locdsptr);
+    } else {
+      mpl_trickle_timer_reset(locdsptr);
+    }
   }
 #endif
 
