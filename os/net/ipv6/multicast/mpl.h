@@ -217,20 +217,30 @@
 #endif
 /*---------------------------------------------------------------------------*/
 /**
- * MPL Forwarding Strategy
- * Two forwarding strategies are defined for MPL. With Proactive forwarding
- * enabled, the forwarder will schedule transmissions of new messages
- * before any control messages are received to indicate that neighbouring nodes
- * have yet to receive the messages. With Reactive forwarding enabled, MPL
- * forwarders will only schedule transmissions of new MPL messages once control
- * messages have been received indicating that they are missing those messages.
- * 1 - Indicates that proactive forwarding be enabled
- * 0 - Indicates that proactive forwarding be disabled
+ * MPL Forwarding Strategies
+ * Two forwarding strategies are defined for MPL, Proactive Forwarding and
+ * Reactive Forwarding. Both may be used simultaneously, or either one may be
+ * used on it's own.
+ * 
+ * With Proactive forwarding enabled, the forwarder will schedule
+ * messages to be forwarded using a trickle timer as soon as the message is
+ * received. 
+ * 
+ * With Reactive forwarding enabled, MPL forwarders will cache messages and 
+ * communicate the contents of their caches using MPL Control messages. Any
+ * forwarders missing messages then have the messages transmitted or 
+ * retransmitted by a neighbour.
  */
 #ifndef MPL_CONF_PROACTIVE_FORWARDING
-#define MPL_PROACTIVE_FORWARDING            0
+#define MPL_PROACTIVE_FORWARDING            1
 #else
 #define MPL_PROACTIVE_FORWARDING MPL_CONF_PROACTIVE_FORWARDING
+#endif
+
+#ifndef MPL_CONF_REACTIVE_FORWARDING
+#define MPL_REACTIVE_FORWARDING            1
+#else
+#define MPL_REACTIVE_FORWARDING MPL_CONF_REACTIVE_FORWARDING
 #endif
 /*---------------------------------------------------------------------------*/
 /**
