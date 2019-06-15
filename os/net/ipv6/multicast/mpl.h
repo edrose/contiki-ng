@@ -115,6 +115,17 @@
 /* Protocol Configuration */
 /*---------------------------------------------------------------------------*/
 /**
+ * Enrollable Domains and Routing using RPL
+ * EDR Allows for integration of MPL and RPL to allow MPL Domains to be
+ * configured using RPL 
+ */
+#ifndef MPL_CONF_EDR
+#define MPL_EDR                             0
+#else
+#define MPL_EDR MPL_CONF_EDR
+#endif
+/*---------------------------------------------------------------------------*/
+/**
  * Seed ID Length
  * The MPL Protocol requires that each seed is identified by an ID that is
  * unique to the MPL domain. The Seed ID can be either a 16 bit, 64 bit,
@@ -285,6 +296,9 @@
 
 /* Configure the correct number of multicast addresses for MPL */
 #define UIP_CONF_DS6_MADDR_NBU MPL_DOMAIN_SET_SIZE * 2
+/* Configure RPL for use with EDR */
+#undef RPL_WITH_MULTICAST
+#define RPL_WITH_MULTICAST 1
 
 /*---------------------------------------------------------------------------*/
 /* Stats datatype */
