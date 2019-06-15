@@ -48,6 +48,9 @@
 #include "net/ipv6/uip-icmp6.h"
 #include "net/ipv6/multicast/mpl.h"
 #include "net/ipv6/multicast/uip-mcast6.h"
+#if MPL_EDR
+#include "net/ipv6/multicast/uip-mcast6-route.h"
+#endif
 #include "dev/watchdog.h"
 #include "os/lib/trickle-timer.h"
 #include "os/lib/list.h"
@@ -1042,7 +1045,11 @@ mpl_maddr_check(void)
     }
   }
   /* Check for domain set addresses that aren't in our maddr table */
+#if MPL_EDR
+  if(DOMAIN_SET_IS_USED(locdsptr) && !uip_ds6_maddr_lookup(&locdsptr->data_addr) && !uip_mcast6_route_lookup(&locdsptr->data_addr)) {
+#else
   for(locdsptr = &domain_set[MPL_DOMAIN_SET_SIZE - 1]; locdsptr >= domain_set; locdsptr--) {
+#endif
     if(DOMAIN_SET_IS_USED(locdsptr) && !uip_ds6_maddr_lookup(&locdsptr->data_addr)) {
       domain_set_free(locdsptr);
     }
@@ -1766,7 +1773,11 @@ drop:
 static uint8_t
 in(void)
 {
+#if MPL_EDR
+  if(DOMAIN_SET_IS_USED(locdsptr) && !uip_ds6_maddr_lookup(&locdsptr->data_addr) && !uip_mcast6_route_lookup(&locdsptr->data_addr)) {
+#else
   if(!uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr)) {
+#endif
     LOG_INFO("Not in our domain. No further processing\n");
     return UIP_MCAST6_DROP;
   }

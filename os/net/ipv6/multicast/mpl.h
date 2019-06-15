@@ -297,9 +297,12 @@
 /* Configure the correct number of multicast addresses for MPL */
 #define UIP_CONF_DS6_MADDR_NBU MPL_DOMAIN_SET_SIZE * 2
 /* Configure RPL for use with EDR */
+#if MPL_EDR
 #undef RPL_WITH_MULTICAST
+#undef MPL_PROACTIVE_FORWARDING 
 #define RPL_WITH_MULTICAST 1
-
+#define MPL_PROACTIVE_FORWARDING 1
+#endif
 /*---------------------------------------------------------------------------*/
 /* Stats datatype */
 /*---------------------------------------------------------------------------*/
