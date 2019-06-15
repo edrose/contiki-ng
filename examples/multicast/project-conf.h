@@ -53,6 +53,11 @@
 #define MPL_CONF_DATA_MESSAGE_IMIN  64
 #define MPL_CONF_CONTROL_MESSAGE_IMIN  64
 
+/* Configure MPL to use EDR RPL integration */
+#define MPL_CONF_EDR 1
+#define MPL_CONF_SUB_TO_ALL_FORWARDERS 0
+#define MPL_CONF_CONTROL_MESSAGE_EXPIRATIONS 5
+
 #define UIP_MCAST6_ROUTE_CONF_ROUTES 1
 
 /* Code/RAM footprint savings so that things will fit on our device */
