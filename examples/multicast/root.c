@@ -96,7 +96,7 @@ prepare_mcast(void)
 {
   uip_ipaddr_t ipaddr;
 
-#if UIP_MCAST6_CONF_ENGINE == UIP_MCAST6_ENGINE_MPL
+#if UIP_MCAST6_CONF_ENGINE == UIP_MCAST6_ENGINE_MPL && !MPL_EDR
 /*
  * MPL defines a well-known MPL domain, MPL_ALL_FORWARDERS, which
  *  MPL nodes are automatically members of. Send to that domain.
