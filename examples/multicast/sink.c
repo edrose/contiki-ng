@@ -75,7 +75,7 @@ tcpip_handler(void)
   return;
 }
 /*---------------------------------------------------------------------------*/
-#if UIP_MCAST6_CONF_ENGINE != UIP_MCAST6_ENGINE_MPL
+#if UIP_MCAST6_CONF_ENGINE != UIP_MCAST6_ENGINE_MPL || MPL_EDR
 static uip_ds6_maddr_t *
 join_mcast_group(void)
 {
@@ -114,7 +114,7 @@ PROCESS_THREAD(mcast_sink_process, ev, data)
    * MPL nodes are automatically configured to subscribe to the ALL_MPL_FORWARDERS
    *  well-known address, so this isn't needed.
    */
-#if UIP_MCAST6_CONF_ENGINE != UIP_MCAST6_ENGINE_MPL
+#if UIP_MCAST6_CONF_ENGINE != UIP_MCAST6_ENGINE_MPL || MPL_EDR
   if(join_mcast_group() == NULL) {
     PRINTF("Failed to join multicast group\n");
     PROCESS_EXIT();

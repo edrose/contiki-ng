@@ -59,7 +59,7 @@
 
 #include "sys/log.h"
 #define LOG_MODULE "MPL"
-#define LOG_LEVEL LOG_LEVEL_NONE
+#define LOG_LEVEL LOG_LEVEL_DBG
 
 /*---------------------------------------------------------------------------*/
 /* Check Parameters are Correct */
@@ -1045,12 +1045,12 @@ mpl_maddr_check(void)
     }
   }
   /* Check for domain set addresses that aren't in our maddr table */
-#if MPL_EDR
-  if(DOMAIN_SET_IS_USED(locdsptr) && !uip_ds6_maddr_lookup(&locdsptr->data_addr) && !uip_mcast6_route_lookup(&locdsptr->data_addr)) {
-#else
   for(locdsptr = &domain_set[MPL_DOMAIN_SET_SIZE - 1]; locdsptr >= domain_set; locdsptr--) {
-#endif
+#if MPL_EDR
+    if(DOMAIN_SET_IS_USED(locdsptr) && !uip_ds6_maddr_lookup(&locdsptr->data_addr) && !uip_mcast6_route_lookup(&locdsptr->data_addr)) {
+#else
     if(DOMAIN_SET_IS_USED(locdsptr) && !uip_ds6_maddr_lookup(&locdsptr->data_addr)) {
+#endif
       domain_set_free(locdsptr);
     }
   }
@@ -1774,7 +1774,7 @@ static uint8_t
 in(void)
 {
 #if MPL_EDR
-  if(DOMAIN_SET_IS_USED(locdsptr) && !uip_ds6_maddr_lookup(&locdsptr->data_addr) && !uip_mcast6_route_lookup(&locdsptr->data_addr)) {
+  if(!uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr) && !uip_mcast6_route_lookup(&UIP_IP_BUF->destipaddr)) {
 #else
   if(!uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr)) {
 #endif
