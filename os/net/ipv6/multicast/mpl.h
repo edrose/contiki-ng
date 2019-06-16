@@ -258,7 +258,7 @@
  * from the neighbours cache.
  */
 #ifndef MPL_CONF_PROACTIVE_FORWARDING
-#define MPL_PROACTIVE_FORWARDING            0
+#define MPL_PROACTIVE_FORWARDING            1
 #else
 #define MPL_PROACTIVE_FORWARDING MPL_CONF_PROACTIVE_FORWARDING
 #endif
