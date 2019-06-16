@@ -128,6 +128,18 @@
 #endif
 /*---------------------------------------------------------------------------*/
 /**
+ * Tentative Caching
+ * Part of EDR - allows for reduction of cache use within a RPL tree by only 
+ * enabling reactive forwarding for individual forwarders under specific 
+ * conditions.
+ */
+#ifndef MPL_CONF_TENTATIVE_CACHING
+#define MPL_TENTATIVE_CACHING               0
+#else
+#define MPL_TENTATIVE_CACHING MPL_CONF_TENTATIVE_CACHING
+#endif
+/*---------------------------------------------------------------------------*/
+/**
  * Seed ID Length
  * The MPL Protocol requires that each seed is identified by an ID that is
  * unique to the MPL domain. The Seed ID can be either a 16 bit, 64 bit,
