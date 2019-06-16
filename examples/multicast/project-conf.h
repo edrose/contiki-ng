@@ -55,6 +55,7 @@
 
 /* Configure MPL to use EDR RPL integration */
 #define MPL_CONF_EDR 1
+#define MPL_CONF_TENTATIVE_CACHING 1
 #define MPL_CONF_SUB_TO_ALL_FORWARDERS 0
 #define MPL_CONF_CONTROL_MESSAGE_EXPIRATIONS 5
 

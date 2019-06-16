@@ -51,6 +51,10 @@
 #if MPL_EDR
 #include "net/ipv6/multicast/uip-mcast6-route.h"
 #endif
+#if MPL_TENTATIVE_CACHING
+#include "net/routing/rpl-classic/rpl.h"
+#include "net/packetbuf.h"
+#endif
 #include "dev/watchdog.h"
 #include "os/lib/trickle-timer.h"
 #include "os/lib/list.h"
@@ -604,7 +608,7 @@ domain_set_allocate(uip_ip6addr_t *address)
 #if MPL_PROACTIVE_FORWARDING
       DOMAIN_SET_ENABLE_PROACTIVE(locdsptr);
 #endif
-#if MPL_REACTIVE_FORWARDING
+#if MPL_REACTIVE_FORWARDING && !MPL_TENTATIVE_CACHING
       DOMAIN_SET_ENABLE_REACTIVE(locdsptr);
 #endif
       if(!trickle_timer_config(&locdsptr->tt,
@@ -1455,6 +1459,11 @@ accept(uint8_t in)
   static uint8_t S;
   static struct mpl_msg *mmiterptr;
   static struct uip_ext_hdr *hptr;
+#if MPL_TENTATIVE_CACHING
+  rpl_dag_t *d;                 /* Our DODAG */
+  uip_ipaddr_t *parent_ipaddr;  /* Our pref. parent's IPv6 address */
+  const uip_lladdr_t *parent_lladdr;  /* Our pref. parent's LL address */
+#endif
 
   LOG_INFO("Multicast I/O\n");
 
@@ -1556,6 +1565,34 @@ accept(uint8_t in)
       return UIP_MCAST6_DROP;
     }
   }
+  
+#if MPL_TENTATIVE_CACHING
+  if (!DOMAIN_SET_REACTIVE(locdsptr)) {
+    LOG_DBG("Checking whether reactive forwarding can be enabled\n");
+    d = rpl_get_any_dag();
+    if(!d) {
+      LOG_ERR("No RPL DAG Found\n");
+    } else {
+      /* Retrieve our preferred parent's LL address */
+      parent_ipaddr = rpl_parent_get_ipaddr(d->preferred_parent);
+      parent_lladdr = uip_ds6_nbr_lladdr_from_ipaddr(parent_ipaddr);
+
+      if(parent_lladdr == NULL) {
+        LOG_ERR("No Preferred Parent found\n");
+      } else {
+        /*
+        * If this came from our preferred parent, enable reactive
+        * reactive forwarding for this domain.
+        */
+        if(!memcmp(parent_lladdr, packetbuf_addr(PACKETBUF_ADDR_SENDER),
+                  UIP_LLADDR_LEN)) {
+          LOG_DBG("Enabling Reactive forwarding for Domain\n");
+          DOMAIN_SET_ENABLE_REACTIVE(locdsptr);
+        }
+      }
+    }
+  }
+#endif
 
   /* Now lookup this seed */
   locssptr = seed_set_lookup(&seed_id, locdsptr);
