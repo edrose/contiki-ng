@@ -117,7 +117,9 @@
 /**
  * Enrollable Domains and Routing using RPL
  * EDR Allows for integration of MPL and RPL to allow MPL Domains to be
- * configured using RPL 
+ * configured using RPL, allowing for messages to only flood the parts of the
+ * RPL instance that need them. This option will also enable proactive
+ * forwarding.
  */
 #ifndef MPL_CONF_EDR
 #define MPL_EDR                             0
