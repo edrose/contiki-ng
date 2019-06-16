@@ -1566,34 +1566,6 @@ accept(uint8_t in)
     }
   }
   
-#if MPL_TENTATIVE_CACHING
-  if (!DOMAIN_SET_REACTIVE(locdsptr)) {
-    LOG_DBG("Checking whether reactive forwarding can be enabled\n");
-    d = rpl_get_any_dag();
-    if(!d) {
-      LOG_ERR("No RPL DAG Found\n");
-    } else {
-      /* Retrieve our preferred parent's LL address */
-      parent_ipaddr = rpl_parent_get_ipaddr(d->preferred_parent);
-      parent_lladdr = uip_ds6_nbr_lladdr_from_ipaddr(parent_ipaddr);
-
-      if(parent_lladdr == NULL) {
-        LOG_ERR("No Preferred Parent found\n");
-      } else {
-        /*
-        * If this came from our preferred parent, enable reactive
-        * reactive forwarding for this domain.
-        */
-        if(!memcmp(parent_lladdr, packetbuf_addr(PACKETBUF_ADDR_SENDER),
-                  UIP_LLADDR_LEN)) {
-          LOG_DBG("Enabling Reactive forwarding for Domain\n");
-          DOMAIN_SET_ENABLE_REACTIVE(locdsptr);
-        }
-      }
-    }
-  }
-#endif
-
   /* Now lookup this seed */
   locssptr = seed_set_lookup(&seed_id, locdsptr);
 
@@ -1623,6 +1595,37 @@ accept(uint8_t in)
     }
   }
   /* We have not seen this message before */
+
+#if MPL_TENTATIVE_CACHING
+  if (!DOMAIN_SET_REACTIVE(locdsptr)) {
+    LOG_DBG("Checking whether reactive forwarding can be enabled\n");
+    d = rpl_get_any_dag();
+    if(!d) {
+      LOG_ERR("No RPL DAG Found\n");
+    } else {
+      /* Retrieve our preferred parent's LL address */
+      parent_ipaddr = rpl_parent_get_ipaddr(d->preferred_parent);
+      parent_lladdr = uip_ds6_nbr_lladdr_from_ipaddr(parent_ipaddr);
+
+      if(parent_lladdr == NULL) {
+        LOG_ERR("No Preferred Parent found\n");
+      } else {
+        /*
+        * If this came from our preferred parent, enable reactive
+        * reactive forwarding for this domain.
+        */
+       LOG_DBG("Message from ll addr ");
+       LOG_DBG_LLADDR((const linkaddr_t*)parent_lladdr);
+       LOG_DBG_("\n");
+        if(!memcmp(parent_lladdr, packetbuf_addr(PACKETBUF_ADDR_SENDER),
+                  UIP_LLADDR_LEN)) {
+          LOG_DBG("Enabling Reactive forwarding for Domain\n");
+          DOMAIN_SET_ENABLE_REACTIVE(locdsptr);
+        }
+      }
+    }
+  }
+#endif
 
   /* Allocate a seed set if we have to */
   if(!locssptr) {

@@ -88,7 +88,7 @@ multicast_send(void)
   PRINTF(" %lu bytes\n", (unsigned long)sizeof(id));
 
   seq_id++;
-  //uip_udp_packet_send(mcast_conn, buf, sizeof(id));
+  uip_udp_packet_send(mcast_conn, buf, sizeof(id));
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -112,6 +112,32 @@ prepare_mcast(void)
   mcast_conn = udp_new(&ipaddr, UIP_HTONS(MCAST_SINK_UDP_PORT), NULL);
 }
 /*---------------------------------------------------------------------------*/
+static uip_ds6_maddr_t *
+join_mcast_group(void)
+{
+  uip_ipaddr_t addr;
+  uip_ds6_maddr_t *rv;
+  const uip_ipaddr_t *default_prefix = uip_ds6_default_prefix();
+
+  /* First, set our v6 global */
+  uip_ip6addr_copy(&addr, default_prefix);
+  uip_ds6_set_addr_iid(&addr, &uip_lladdr);
+  uip_ds6_addr_add(&addr, 0, ADDR_AUTOCONF);
+
+  /*
+   * IPHC will use stateless multicast compression for this destination
+   * (M=1, DAC=0), with 32 inline bits (1E 89 AB CD)
+   */
+  uip_ip6addr(&addr, 0xFF1E,0,0,0,0,0,0x89,0xABCD);
+  rv = uip_ds6_maddr_add(&addr);
+
+  if(rv) {
+    PRINTF("Joined multicast group ");
+    PRINT6ADDR(&uip_ds6_maddr_lookup(&addr)->ipaddr);
+    PRINTF("\n");
+  }
+  return rv;
+}
 PROCESS_THREAD(rpl_root_process, ev, data)
 {
   static struct etimer et;
@@ -120,9 +146,8 @@ PROCESS_THREAD(rpl_root_process, ev, data)
 
   PRINTF("Multicast Engine: '%s'\n", UIP_MCAST6.name);
 
-  NETSTACK_ROUTING.root_start();
-
   prepare_mcast();
+  join_mcast_group();
 
   etimer_set(&et, START_DELAY * CLOCK_SECOND);
   while(1) {
