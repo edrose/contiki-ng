@@ -59,7 +59,7 @@
 
 #include "sys/log.h"
 #define LOG_MODULE "MPL"
-#define LOG_LEVEL LOG_LEVEL_DBG
+#define LOG_LEVEL LOG_LEVEL_NONE
 
 /*---------------------------------------------------------------------------*/
 /* Check Parameters are Correct */
