@@ -81,6 +81,9 @@
 #endif /* ENERGEST_CONF_GET_TOTAL_TIME */
 #endif /* ENERGEST_GET_TOTAL_TIME */
 
+#define ENERGEST_BIT_RATE 250000
+#define ENERGEST_TICKS_PER_BYTE ENERGEST_SECOND * 8 / ENERGEST_BIT_RATE
+
 /*
  * Optional support for more energest types.
  *

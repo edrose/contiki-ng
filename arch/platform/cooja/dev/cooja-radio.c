@@ -42,6 +42,7 @@
 #include "dev/radio.h"
 #include "dev/cooja-radio.h"
 
+#include "sys/energest.h"
 /*
  * The maximum number of bytes this driver can accept from the MAC layer for
  * transmission or will deliver to the MAC layer after reception. Includes
@@ -140,6 +141,7 @@ static int
 radio_on(void)
 {
   simRadioHWOn = 1;
+  ENERGEST_ON(ENERGEST_TYPE_LISTEN);
   return 1;
 }
 /*---------------------------------------------------------------------------*/
@@ -147,6 +149,7 @@ static int
 radio_off(void)
 {
   simRadioHWOn = 0;
+  ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
   return 1;
 }
 /*---------------------------------------------------------------------------*/
@@ -268,7 +271,12 @@ transmit_packet(unsigned short len)
 {
   int ret = RADIO_TX_ERR;
   if(pending_data != NULL) {
+    /* WARNING: Bodge job! Stall processing for the correct amount of time for a transmission */
+    ENERGEST_SWITCH(ENERGEST_TYPE_LISTEN, ENERGEST_TYPE_TRANSMIT);
+    unsigned long start = ENERGEST_CURRENT_TIME();
     ret = radio_send(pending_data, len);
+    while (ENERGEST_CURRENT_TIME() < start + ENERGEST_TICKS_PER_BYTE * len) {}
+    ENERGEST_SWITCH(ENERGEST_TYPE_TRANSMIT, ENERGEST_TYPE_LISTEN);
   }
   return ret;
 }
