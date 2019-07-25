@@ -169,6 +169,33 @@ energest_switch(energest_type_t type_off, energest_type_t type_on)
 }
 #define ENERGEST_SWITCH(type_off, type_on) energest_switch(type_off, type_on)
 
+static inline void
+energest_add_switch_time(energest_type_t type_off, energest_type_t type_on, ENERGEST_TIME_T time)
+{
+  ENERGEST_TIME_T energest_local_variable_now = ENERGEST_CURRENT_TIME();
+  if(energest_current_mode[type_off] != 0) {
+    energest_total_time[type_off] += (ENERGEST_TIME_T)
+      (energest_local_variable_now - energest_current_time[type_off]);
+    energest_current_mode[type_off] = 0;
+  }
+  if(energest_current_mode[type_on] == 0) {
+    energest_current_time[type_on] = energest_local_variable_now;
+    energest_current_mode[type_on] = 1;
+  }
+
+  energest_local_variable_now = ENERGEST_CURRENT_TIME() + time;
+  if(energest_current_mode[type_on] != 0) {
+    energest_total_time[type_on] += (ENERGEST_TIME_T)
+      (energest_local_variable_now - energest_current_time[type_on]);
+    energest_current_mode[type_on] = 0;
+  }
+  if(energest_current_mode[type_off] == 0) {
+    energest_current_time[type_off] = energest_local_variable_now;
+    energest_current_mode[type_off] = 1;
+  }
+}
+#define ENERGEST_ADD_SWITCH_TIME(type_off, type_on, time) energest_add_switch_time(type_off, type_on, time)
+
 #else /* ENERGEST_CONF_ON */
 
 static inline uint64_t energest_type_time(energest_type_t type) { return 0; }

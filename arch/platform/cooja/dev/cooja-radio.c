@@ -272,11 +272,8 @@ transmit_packet(unsigned short len)
   int ret = RADIO_TX_ERR;
   if(pending_data != NULL) {
     /* WARNING: Bodge job! Stall processing for the correct amount of time for a transmission */
-    ENERGEST_SWITCH(ENERGEST_TYPE_LISTEN, ENERGEST_TYPE_TRANSMIT);
-    unsigned long start = ENERGEST_CURRENT_TIME();
     ret = radio_send(pending_data, len);
-    while (ENERGEST_CURRENT_TIME() < start + ENERGEST_TICKS_PER_BYTE * len) {}
-    ENERGEST_SWITCH(ENERGEST_TYPE_TRANSMIT, ENERGEST_TYPE_LISTEN);
+    ENERGEST_ADD_SWITCH_TIME(ENERGEST_TYPE_LISTEN, ENERGEST_TYPE_TRANSMIT, len * ENERGEST_TICKS_PER_BYTE);
   }
   return ret;
 }
