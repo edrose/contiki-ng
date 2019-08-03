@@ -1044,6 +1044,21 @@ mpl_maddr_check(void)
       }
     }
   }
+#if MPL_EDR
+  /* Also check for new routes we should join */
+  struct uip_mcast6_route *route;
+  for(route = uip_mcast6_route_list_head();
+      route != NULL;
+      route = route->next) {
+    locdsptr = domain_set_lookup(&route->group);
+    if(!locdsptr) {
+      locdsptr = domain_set_allocate(&route->group);
+      if(!locdsptr) {
+        LOG_ERR("Failed to allocate domain set in mpl_maddr_check()\n");
+      }
+    }
+  }
+#endif
   /* Check for domain set addresses that aren't in our maddr table */
   for(locdsptr = &domain_set[MPL_DOMAIN_SET_SIZE - 1]; locdsptr >= domain_set; locdsptr--) {
 #if MPL_EDR
