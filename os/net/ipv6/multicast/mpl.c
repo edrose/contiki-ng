@@ -479,6 +479,17 @@ static void icmp_in(void);
 UIP_ICMP6_HANDLER(mpl_icmp_handler, ICMP6_MPL, 0, icmp_in);
 #endif
 
+float
+cache_usage() {
+  int count = 0;
+  for (locmmptr = &buffered_message_set[MPL_BUFFERED_MESSAGE_SET_SIZE - 1]; locmmptr >= buffered_message_set; locmmptr--) {
+    if (MSG_SET_IS_USED(locmmptr)) {
+      count++;
+    }
+  }
+  return (float) count / MPL_BUFFERED_MESSAGE_SET_SIZE * 100;
+}
+
 static struct mpl_msg *
 buffer_allocate(void)
 {
