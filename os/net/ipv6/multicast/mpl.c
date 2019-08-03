@@ -1667,6 +1667,13 @@ accept(uint8_t in)
   }
 #endif
 
+  /* If not our address but we accepted through EDR, prevent forwarding */
+#if MPL_EDR
+  if(!uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr)) {
+    return UIP_MCAST6_DROP;
+  }
+#endif
+
   /* Deliver if necessary */
   return UIP_MCAST6_ACCEPT;
 }
